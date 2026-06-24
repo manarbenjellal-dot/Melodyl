@@ -1,0 +1,50 @@
+{
+  "name": "melodyl",
+  "version": "1.0.0",
+  "description": "Melodyl — Vinyl music player",
+  "main": "electron/main.js",
+  "author": "Melodyl",
+  "license": "MIT",
+  "scripts": {
+    "start":    "electron .",
+    "dev":      "electron . --dev",
+    "dist":     "electron-builder --win --x64",
+    "dist-all": "electron-builder -mwl"
+  },
+  "build": {
+    "appId": "com.melodyl.app",
+    "productName": "Melodyl",
+    "copyright": "Melodyl",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "electron/**/*",
+      "index.html",
+      "styles/**/*",
+      "js/**/*"
+    ],
+    "win": {
+      "target": [{ "target": "nsis", "arch": ["x64"] }]
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "electron/icon.icns"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "electron/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Melodyl"
+    }
+  },
+  "devDependencies": {
+    "electron": "^29.0.0",
+    "electron-builder": "^24.0.0"
+  }
+}

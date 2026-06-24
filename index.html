@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Melodyl</title>
+  <link rel="stylesheet" href="styles/main.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=Playfair+Display:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet" />
+</head>
+<body>
+<!-- Electron frameless window title bar (hidden in browser) -->
+<div class="electron-titlebar" id="electron-titlebar">
+  <div class="titlebar-drag-region"></div>
+  <div class="titlebar-title">Melodyl</div>
+  <div class="titlebar-controls">
+    <button class="tb-btn tb-min"   id="tb-min"   aria-label="Minimize">&#x2212;</button>
+    <button class="tb-btn tb-max"   id="tb-max"   aria-label="Maximize">&#x25A1;</button>
+    <button class="tb-btn tb-close" id="tb-close" aria-label="Close">&#x2715;</button>
+  </div>
+</div>
+<div id="app">
+
+  <!-- Ambient Background -->
+  <canvas id="bg-canvas"></canvas>
+  <div class="ambient-orbs">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <!-- ══════════ TOP NAV BAR ══════════ -->
+  <header class="top-bar" id="top-bar">
+    <div class="top-bar-logo">
+      <div class="logo-disc"></div>
+      <span class="logo-text">Melodyl</span>
+    </div>
+
+    <nav class="top-nav" role="tablist">
+      <button class="top-nav-btn active" data-view="player" role="tab" aria-selected="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+        Player
+      </button>
+      <button class="top-nav-btn" data-view="library" role="tab" aria-selected="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+        Library
+      </button>
+    </nav>
+
+    <div class="top-bar-actions">
+      <!-- Theme toggle -->
+      <button class="icon-btn" id="theme-btn" aria-label="Toggle theme" title="Toggle light / dark">
+        <svg class="icon-dark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z"/></svg>
+        <svg class="icon-light" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="display:none"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      </button>
+      <!-- Collapse sidebar arrow -->
+      <button class="icon-btn" id="sidebar-toggle-btn" aria-label="Toggle sidebar" title="Hide / show sidebar">
+        <svg id="sidebar-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ══════════ MAIN AREA ══════════ -->
+  <div class="app-body" id="app-body">
+
+    <!-- ══ PLAYER VIEW ══ -->
+    <section class="view active" id="view-player">
+      <div class="player-stage">
+
+        <!-- Turntable + controls centred column -->
+        <div class="turntable-col">
+
+          <!-- Turntable -->
+          <div class="turntable-wrap">
+            <div class="turntable-body">
+
+              <!-- Platter -->
+              <div class="platter-zone" id="platter-zone">
+                <div class="platter-base">
+                  <div class="platter-felt"></div>
+                  <!-- Vinyl (hidden until track loaded) -->
+                  <div class="vinyl-on-player" id="vinyl-player">
+                    <canvas id="vinyl-canvas" width="300" height="300"></canvas>
+                    <div class="vinyl-center-label" id="vinyl-label">
+                      <div class="label-art" id="label-art"></div>
+                      <div class="label-hole"></div>
+                    </div>
+                  </div>
+                  <div class="spindle-post"></div>
+                </div>
+              </div>
+
+              <!-- Tonearm -->
+              <div class="tonearm-assembly at-rest" id="tonearm">
+                <div class="tonearm-pivot-point"></div>
+                <div class="tonearm-shaft"></div>
+                <div class="tonearm-head">
+                  <div class="needle-glow"></div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Track name under turntable (minimal) -->
+          <div class="track-name-row">
+            <span class="tn-title" id="np-title"></span>
+            <span class="tn-sep" id="np-sep"></span>
+            <span class="tn-artist" id="np-artist"></span>
+          </div>
+
+          <!-- Progress bar -->
+          <div class="progress-section">
+            <div class="time-row">
+              <span id="time-current">0:00</span>
+              <span id="time-total">0:00</span>
+            </div>
+            <div class="progress-bar" id="progress-bar" role="slider" aria-label="Track progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" tabindex="0">
+              <div class="progress-track-bg">
+                <div class="progress-fill" id="progress-fill"></div>
+                <div class="progress-glow" id="progress-glow"></div>
+              </div>
+              <div class="progress-handle" id="progress-handle"></div>
+            </div>
+          </div>
+
+          <!-- Playback controls UNDER turntable — small icons -->
+          <div class="playback-controls">
+            <button class="ctrl-btn ctrl-xs" id="btn-shuffle" aria-label="Shuffle" title="Shuffle">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/></svg>
+            </button>
+            <button class="ctrl-btn ctrl-sm" id="btn-prev" aria-label="Previous">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg>
+            </button>
+            <button class="ctrl-btn ctrl-lg" id="btn-play" aria-label="Play / Pause">
+              <svg class="icon-play" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+              <svg class="icon-pause" viewBox="0 0 24 24" fill="currentColor" style="display:none"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+            </button>
+            <button class="ctrl-btn ctrl-sm" id="btn-next" aria-label="Next">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zm2.5-6 5.5 4V8l-5.5 4zM16 6h2v12h-2z"/></svg>
+            </button>
+            <button class="ctrl-btn ctrl-xs" id="btn-repeat" aria-label="Repeat" title="Repeat">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+            </button>
+          </div>
+
+          <!-- Volume -->
+          <div class="volume-section">
+            <button class="vol-btn" id="btn-mute" aria-label="Mute">
+              <svg id="vol-icon-low" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
+              <svg id="vol-icon-high" viewBox="0 0 24 24" fill="currentColor" style="display:none"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM16.5 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+              <svg id="vol-icon-mute" viewBox="0 0 24 24" fill="currentColor" style="display:none"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>
+            </button>
+            <input type="range" class="volume-slider" id="volume-slider" min="0" max="100" value="80" aria-label="Volume" />
+          </div>
+
+          <!-- Visualizer -->
+          <div class="visualizer-wrap">
+            <canvas id="visualizer" width="480" height="48"></canvas>
+          </div>
+
+        </div><!-- /turntable-col -->
+
+        <!-- Right side panel: album carousel -->
+        <aside class="right-panel" id="right-panel">
+          <div class="rp-header">
+            <span class="rp-title">Now Playing</span>
+          </div>
+          <!-- Water-bubble up arrow -->
+          <button class="rp-arrow rp-arrow-top" id="rp-arrow-up" aria-label="Scroll up">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
+          </button>
+          <div class="carousel-wrap" id="carousel-wrap">
+            <div class="carousel-track" id="carousel-track">
+              <!-- Album cards injected by JS -->
+            </div>
+            <div class="carousel-empty" id="carousel-empty">
+              <p>No records yet</p>
+              <p class="empty-sub">Add music in the Library</p>
+            </div>
+          </div>
+          <!-- Water-bubble down arrow -->
+          <button class="rp-arrow rp-arrow-bot" id="rp-arrow-down" aria-label="Scroll down">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+        </aside>
+
+      </div><!-- /player-stage -->
+    </section>
+
+    <!-- ══ LIBRARY VIEW ══ -->
+    <section class="view" id="view-library">
+      <div class="lib-header">
+        <div>
+          <h1 class="view-title">My Records</h1>
+          <p class="view-subtitle" id="lib-count">0 records</p>
+        </div>
+        <div class="lib-header-right">
+          <div class="search-field">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" class="search-input" id="library-search" placeholder="Search..." aria-label="Search library" />
+          </div>
+          <button class="pill-btn primary" id="add-music-btn" aria-label="Add music">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add Music
+          </button>
+        </div>
+      </div>
+
+      <div class="vinyl-grid" id="vinyl-grid">
+        <div class="grid-empty" id="library-empty">
+          <div class="empty-vinyl-icon"></div>
+          <p class="empty-title">Your collection is empty</p>
+          <p class="empty-sub">Click "Add Music" to upload your first record</p>
+        </div>
+      </div>
+    </section>
+
+  </div><!-- /app-body -->
+</div><!-- /app -->
+
+<!-- ══════════ ADD MUSIC MODAL ══════════ -->
+<div class="modal-overlay hidden" id="add-modal" role="dialog" aria-modal="true" aria-labelledby="add-modal-title">
+  <div class="modal glass-panel">
+    <button class="modal-close" id="modal-close" aria-label="Close">&times;</button>
+    <h2 class="modal-title" id="add-modal-title">Add a Record</h2>
+
+    <!-- Audio file drop zone -->
+    <div class="upload-zone" id="upload-zone">
+      <div class="upload-icon-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+      </div>
+      <p class="upload-label">Drop audio file or click to browse</p>
+      <p class="upload-sub">MP3, WAV, FLAC, OGG</p>
+      <input type="file" id="file-input" accept=".mp3,.wav,.flac,.ogg,audio/*" hidden aria-label="Audio file" />
+    </div>
+
+    <div class="form-row">
+      <label class="form-label" for="meta-title">Song Name</label>
+      <input type="text" class="glass-input" id="meta-title" placeholder="Title..." aria-label="Song title" />
+    </div>
+    <div class="form-row">
+      <label class="form-label" for="meta-artist">Artist <span class="optional">(optional)</span></label>
+      <input type="text" class="glass-input" id="meta-artist" placeholder="Artist..." aria-label="Artist name" />
+    </div>
+    <div class="form-row">
+      <label class="form-label">Album Cover <span class="optional">(optional)</span></label>
+      <div class="cover-upload-row">
+        <div class="cover-preview" id="cover-preview"></div>
+        <button class="pill-btn" id="cover-upload-btn" type="button">Choose Image</button>
+        <input type="file" id="cover-input" accept="image/*" hidden aria-label="Album cover image" />
+      </div>
+    </div>
+
+    <div class="modal-file-status" id="modal-file-status"></div>
+    <button class="pill-btn primary full-width" id="save-track-btn" disabled>Add to Library</button>
+  </div>
+</div>
+
+<!-- ══════════ EDIT TRACK MODAL ══════════ -->
+<div class="modal-overlay hidden" id="edit-modal" role="dialog" aria-modal="true" aria-labelledby="edit-modal-title">
+  <div class="modal glass-panel">
+    <button class="modal-close" id="edit-modal-close" aria-label="Close">&times;</button>
+    <h2 class="modal-title" id="edit-modal-title">Edit Record</h2>
+    <input type="hidden" id="edit-track-id" />
+    <div class="form-row">
+      <label class="form-label" for="edit-title">Song Name</label>
+      <input type="text" class="glass-input" id="edit-title" placeholder="Title..." />
+    </div>
+    <div class="form-row">
+      <label class="form-label" for="edit-artist">Artist</label>
+      <input type="text" class="glass-input" id="edit-artist" placeholder="Artist..." />
+    </div>
+    <div class="form-row">
+      <label class="form-label">Album Cover</label>
+      <div class="cover-upload-row">
+        <div class="cover-preview" id="edit-cover-preview"></div>
+        <button class="pill-btn" id="edit-cover-btn" type="button">Change Image</button>
+        <input type="file" id="edit-cover-input" accept="image/*" hidden />
+      </div>
+    </div>
+    <button class="pill-btn primary full-width" id="update-track-btn" style="margin-top:8px">Save Changes</button>
+  </div>
+</div>
+
+<!-- Hidden audio -->
+<audio id="audio-engine" crossorigin="anonymous"></audio>
+
+<script src="js/app.js"></script>
+</body>
+</html>
